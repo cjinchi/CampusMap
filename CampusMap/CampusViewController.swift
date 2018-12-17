@@ -8,15 +8,16 @@
 
 import UIKit
 import MapKit
+import CoreLocation
 
 
-class CampusViewController: UIViewController {
+class CampusViewController: UIViewController,CLLocationManagerDelegate {
     
     @IBOutlet weak var mapView: MKMapView!
     
     var campus = Campus(filename: "Campus")
     var selectedOptions : [MapOptionsType] = []
-    
+    let locationManager = CLLocationManager()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -29,7 +30,59 @@ class CampusViewController: UIViewController {
         
         mapView.region = region
         
+        locationManager.delegate = self
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        if CLLocationManager.authorizationStatus() == .notDetermined{
+            locationManager.requestWhenInUseAuthorization()
+        }
+//        locationManager.pausesLocationUpdatesAutomatically = true
+        locationManager.startUpdatingLocation()
         
+        
+    }
+    
+    @IBAction func goto(sender:GotoButton){
+        print("goto "+sender.coordinate.latitude.description)
+        
+        if let myLocation = myLocation{
+            let request = MKDirections.Request()
+            request.source = MKMapItem(placemark: MKPlacemark(coordinate: myLocation.coordinate))
+            request.destination = MKMapItem(placemark: MKPlacemark(coordinate: sender.coordinate))
+            request.requestsAlternateRoutes = false
+            request.transportType = .walking
+            
+            let directions = MKDirections(request: request)
+            
+            directions.calculate(){res,err in
+                if err != nil{
+                    print("get direction error")
+                }else if let res = res{
+                    for route in res.routes{
+                        self.mapView.addOverlay(route.polyline)
+                        self.mapView.setVisibleMapRect(route.polyline.boundingMapRect, animated: true)
+                        print(route.distance)
+                        for step in route.steps{
+                            print(step.distance)
+                            print(step.instructions)
+                        }
+                    }
+                }else{
+                    print("unknown error")
+                }
+                
+            }
+        }else{
+            print("can't get src")
+        }
+    }
+    
+    
+    
+    var myLocation:CLLocation? = nil
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        myLocation = locations.last
+        print(myLocation!.coordinate.latitude.description+" "+myLocation!.coordinate.longitude.description)
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -39,9 +92,11 @@ class CampusViewController: UIViewController {
     
     // MARK: Helper methods
     func loadSelectedOptions() {
+//        goto()
+        
         mapView.removeAnnotations(mapView.annotations)
         mapView.removeOverlays(mapView.overlays)
-
+        
         for option in selectedOptions {
             switch (option) {
             case .mapPOIs:
@@ -105,9 +160,10 @@ class CampusViewController: UIViewController {
 extension CampusViewController: MKMapViewDelegate {
     
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
-       if overlay is MKPolyline {
+        if overlay is MKPolyline {
             let lineView = MKPolylineRenderer(overlay: overlay)
             lineView.strokeColor = UIColor.green
+            lineView.lineWidth = 5.0
             return lineView
         } else if overlay is MKPolygon {
             let polygonView = MKPolygonRenderer(overlay: overlay)
@@ -119,9 +175,29 @@ extension CampusViewController: MKMapViewDelegate {
         return MKOverlayRenderer()
     }
     
+    class GotoButton:UIButton{
+        var coordinate:CLLocationCoordinate2D
+        init(frame: CGRect,coordinate:CLLocationCoordinate2D) {
+            self.coordinate = coordinate
+            super.init(frame:.zero)
+        }
+        
+        required init?(coder aDecoder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
+    }
+    
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         let annotationView = POIAnnotationView(annotation: annotation, reuseIdentifier: "POI")
         annotationView.canShowCallout = true
+        let button = GotoButton(frame: CGRect(x: 0, y: 0, width: 80, height: 50), coordinate: annotationView.coordinate!)
+        button.setTitle("去这里", for: .normal)
+        button.setTitleColor(UIColor.blue, for: .normal)
+        button.frame = CGRect(x: 0, y: 0, width: 80, height: 50)
+        button.addTarget(self, action:#selector(CampusViewController.goto), for:.touchDown)
+        annotationView.rightCalloutAccessoryView = button
         return annotationView
     }
+    
+    
 }

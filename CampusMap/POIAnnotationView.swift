@@ -11,6 +11,8 @@ import MapKit
 
 class POIAnnotationView: MKAnnotationView {
     
+    var coordinate:CLLocationCoordinate2D? = nil
+    
     // Required for MKAnnotationView
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
@@ -21,5 +23,7 @@ class POIAnnotationView: MKAnnotationView {
         guard let poiAnnotation = self.annotation as? POIAnnotation else { return }
         
         image = poiAnnotation.type.image()
+        
+        coordinate = poiAnnotation.coordinate
     }
 }
