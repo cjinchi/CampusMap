@@ -44,6 +44,10 @@ class CampusViewController: UIViewController,CLLocationManagerDelegate {
     @IBAction func goto(sender:GotoButton){
         print("goto "+sender.coordinate.latitude.description)
         
+        for overlay in mapView.overlays {
+            mapView.removeOverlay(overlay)
+        }
+        
         if let myLocation = myLocation{
             let request = MKDirections.Request()
             request.source = MKMapItem(placemark: MKPlacemark(coordinate: myLocation.coordinate))
