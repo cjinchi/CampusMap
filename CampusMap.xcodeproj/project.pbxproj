@@ -19,6 +19,7 @@
 		34B639CB21ACD224009562B8 /* CampusPOI.plist in Resources */ = {isa = PBXBuildFile; fileRef = 34B639CA21ACD224009562B8 /* CampusPOI.plist */; };
 		34B639CD21ACD325009562B8 /* POIAnnotation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34B639CC21ACD325009562B8 /* POIAnnotation.swift */; };
 		34B639CF21ACD3B5009562B8 /* POIAnnotationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34B639CE21ACD3B5009562B8 /* POIAnnotationView.swift */; };
+		A134947D21CBC792005F8A31 /* BottomSheetViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A134947C21CBC792005F8A31 /* BottomSheetViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -36,6 +37,7 @@
 		34B639CA21ACD224009562B8 /* CampusPOI.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = CampusPOI.plist; sourceTree = "<group>"; };
 		34B639CC21ACD325009562B8 /* POIAnnotation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = POIAnnotation.swift; sourceTree = "<group>"; };
 		34B639CE21ACD3B5009562B8 /* POIAnnotationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = POIAnnotationView.swift; sourceTree = "<group>"; };
+		A134947C21CBC792005F8A31 /* BottomSheetViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottomSheetViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -70,6 +72,7 @@
 			children = (
 				34B639C121ACCB16009562B8 /* Data */,
 				342EBE0521AC3BE400DB96CA /* AppDelegate.swift */,
+				A134947C21CBC792005F8A31 /* BottomSheetViewController.swift */,
 				342EBE0921AC3BE400DB96CA /* Main.storyboard */,
 				342EBE0C21AC3BE500DB96CA /* Assets.xcassets */,
 				342EBE0E21AC3BE500DB96CA /* LaunchScreen.storyboard */,
@@ -167,6 +170,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				34B639CF21ACD3B5009562B8 /* POIAnnotationView.swift in Sources */,
+				A134947D21CBC792005F8A31 /* BottomSheetViewController.swift in Sources */,
 				342EBE0621AC3BE400DB96CA /* AppDelegate.swift in Sources */,
 				342EBE1821AC408D00DB96CA /* CampusViewController.swift in Sources */,
 				34B639C521ACCBFF009562B8 /* CampusMapOverlay.swift in Sources */,

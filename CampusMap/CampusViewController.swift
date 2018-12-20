@@ -9,6 +9,7 @@
 import UIKit
 import MapKit
 import CoreLocation
+import Contacts
 
 
 class CampusViewController: UIViewController,CLLocationManagerDelegate {
@@ -17,7 +18,13 @@ class CampusViewController: UIViewController,CLLocationManagerDelegate {
     
     var campus = Campus(filename: "Campus")
     var selectedOptions : [MapOptionsType] = []
+    
+    //My work
     let locationManager = CLLocationManager()
+    var btvc2 :BottomSheetViewController? = nil
+    var dst:GotoButton? = nil
+    var route:MKPolyline? = nil
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -30,23 +37,94 @@ class CampusViewController: UIViewController,CLLocationManagerDelegate {
         
         mapView.region = region
         
-        locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        
+        //My work
         if CLLocationManager.authorizationStatus() == .notDetermined{
             locationManager.requestWhenInUseAuthorization()
         }
+        locationManager.delegate = self
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
 //        locationManager.pausesLocationUpdatesAutomatically = true
         locationManager.startUpdatingLocation()
         
+
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        (segue.destination as? MapOptionsViewController)?.selectedOptions = selectedOptions
+    }
+    
+    // MARK: Helper methods
+    func loadSelectedOptions() {
+        mapView.removeAnnotations(mapView.annotations)
+        mapView.removeOverlays(mapView.overlays)
         
+        for option in selectedOptions {
+            switch (option) {
+            case .mapBoundary:
+                self.addBoundary()
+            default:
+                self.addPOIs(type: option)
+            }
+        }
+    }
+    
+    
+    @IBAction func closeOptions(_ exitSegue: UIStoryboardSegue) {
+        guard let vc = exitSegue.source as? MapOptionsViewController else { return }
+        selectedOptions = vc.selectedOptions
+        loadSelectedOptions()
+    }
+    
+    
+    func addBoundary() {
+        mapView.addOverlay(MKPolygon(coordinates: campus.boundary, count: campus.boundary.count))
+    }
+    
+    func addPOIs(type:MapOptionsType) {
+        guard let pois = Campus.plist("CampusPOI") as? [[String : String]] else { return }
+        
+        for poi in pois {
+            let typeRawValue = Int(poi["type"] ?? "0") ?? 0
+            let type2 = MapOptionsType(rawValue: typeRawValue) ?? .mapBoundary
+            if type2 != type{
+                continue
+            }
+            let coordinate = Campus.parseCoord(dict: poi, fieldName: "location")
+            let title = poi["name"] ?? ""
+            let subtitle = poi["subtitle"] ?? ""
+            let annotation = POIAnnotation(coordinate: coordinate, title: title, subtitle: subtitle, type: type)
+            mapView.addAnnotation(annotation)
+        }
+    }
+    
+    @IBAction func mapTypeChanged(_ sender: UISegmentedControl) {
+        mapView.mapType = MKMapType.init(rawValue: UInt(sender.selectedSegmentIndex)) ?? .standard
+    }
+    
+    //My work begins here
+    public func removeRoute(){
+        if let route = route {
+            mapView.removeOverlay(route as MKOverlay)
+            self.route = nil
+        }
+    }
+    
+    public func reload(){
+        if let dst = dst{
+            goto(sender: dst)
+            print("reload")
+        }
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        if let btvc2 = btvc2{
+            btvc2.view.isHidden = true
+        }
     }
     
     @IBAction func goto(sender:GotoButton){
-        print("goto "+sender.coordinate.latitude.description)
-        
-        for overlay in mapView.overlays {
-            mapView.removeOverlay(overlay)
-        }
+        removeRoute()
         
         if let myLocation = myLocation{
             let request = MKDirections.Request()
@@ -61,13 +139,19 @@ class CampusViewController: UIViewController,CLLocationManagerDelegate {
                 if err != nil{
                     print("get direction error")
                 }else if let res = res{
+                    self.btvc2?.view.isHidden = false
                     for route in res.routes{
+                        self.route = route.polyline
                         self.mapView.addOverlay(route.polyline)
                         self.mapView.setVisibleMapRect(route.polyline.boundingMapRect, animated: true)
-                        print(route.distance)
-                        for step in route.steps{
+                        var navText = "全程\(route.distance)米：\n";
+                        for (index,step) in route.steps.enumerated(){
+                            navText += "\(index+1)、\(step.instructions)，直走\(step.distance)米。\n"
                             print(step.distance)
                             print(step.instructions)
+                        }
+                        if let btvc2 = self.btvc2{
+                            btvc2.setNavText(text: navText)
                         }
                     }
                 }else{
@@ -85,77 +169,8 @@ class CampusViewController: UIViewController,CLLocationManagerDelegate {
     var myLocation:CLLocation? = nil
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        myLocation = locations.last
-        print(myLocation!.coordinate.latitude.description+" "+myLocation!.coordinate.longitude.description)
+        myLocation = manager.location!
     }
-    
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        (segue.destination as? MapOptionsViewController)?.selectedOptions = selectedOptions
-    }
-    
-    
-    // MARK: Helper methods
-    func loadSelectedOptions() {
-//        goto()
-        
-        mapView.removeAnnotations(mapView.annotations)
-        mapView.removeOverlays(mapView.overlays)
-        
-        for option in selectedOptions {
-            switch (option) {
-            case .mapPOIs:
-                self.addPOIs()
-            case .mapBoundary:
-                self.addBoundary()
-            }
-        }
-    }
-    
-    
-    @IBAction func closeOptions(_ exitSegue: UIStoryboardSegue) {
-        guard let vc = exitSegue.source as? MapOptionsViewController else { return }
-        selectedOptions = vc.selectedOptions
-        loadSelectedOptions()
-    }
-    
-    
-    //    func addOverlay() {
-    //        let overlay = ParkMapOverlay(park: park)
-    //        mapView.addOverlay(overlay)
-    //    }
-    //
-    
-    func addBoundary() {
-        mapView.addOverlay(MKPolygon(coordinates: campus.boundary, count: campus.boundary.count))
-    }
-    
-    func addPOIs() {
-        guard let pois = Campus.plist("CampusPOI") as? [[String : String]] else { return }
-        
-        for poi in pois {
-            let coordinate = Campus.parseCoord(dict: poi, fieldName: "location")
-            let title = poi["name"] ?? ""
-            let typeRawValue = Int(poi["type"] ?? "0") ?? 0
-            let type = POIType(rawValue: typeRawValue) ?? .misc
-            let subtitle = poi["subtitle"] ?? ""
-            let annotation = POIAnnotation(coordinate: coordinate, title: title, subtitle: subtitle, type: type)
-            mapView.addAnnotation(annotation)
-        }
-    }
-    
-    @IBAction func mapTypeChanged(_ sender: UISegmentedControl) {
-        mapView.mapType = MKMapType.init(rawValue: UInt(sender.selectedSegmentIndex)) ?? .standard
-    }
-    
-    /*
-     // MARK: - Navigation
-     
-     // In a storyboard-based application, you will often want to do a little preparation before navigation
-     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-     // Get the new view controller using segue.destination.
-     // Pass the selected object to the new view controller.
-     }
-     */
     
 }
 
@@ -167,7 +182,7 @@ extension CampusViewController: MKMapViewDelegate {
         if overlay is MKPolyline {
             let lineView = MKPolylineRenderer(overlay: overlay)
             lineView.strokeColor = UIColor.green
-            lineView.lineWidth = 5.0
+            lineView.lineWidth = 6.0
             return lineView
         } else if overlay is MKPolygon {
             let polygonView = MKPolygonRenderer(overlay: overlay)
@@ -179,6 +194,7 @@ extension CampusViewController: MKMapViewDelegate {
         return MKOverlayRenderer()
     }
     
+    //My work begins here
     class GotoButton:UIButton{
         var coordinate:CLLocationCoordinate2D
         init(frame: CGRect,coordinate:CLLocationCoordinate2D) {
@@ -203,5 +219,17 @@ extension CampusViewController: MKMapViewDelegate {
         return annotationView
     }
     
-    
+    override func viewDidAppear(_ animated: Bool) {
+        
+        let btvc = BottomSheetViewController(self)
+        btvc2 = btvc
+        self.addChild(btvc)
+        self.view.addSubview(btvc.view)
+        btvc.didMove(toParent: self)
+        
+        btvc.view.frame = CGRect(x: 0, y: self.view.frame.maxY, width: view.frame.height, height: view.frame.width)
+        
+        btvc.view.isHidden = true
+    }
+
 }

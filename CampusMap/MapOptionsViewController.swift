@@ -11,16 +11,59 @@ import UIKit
 
 enum MapOptionsType: Int {
     case mapBoundary = 0
-    case mapPOIs
+    case mapPOIsCanteen
+    case mapPOIsShopping
+    case mapPOIsDormitory
+    case mapPOIsOfficial
+    case mapPOIsStudy
+    case mapPOIsNature
+    case mapPOIsExercise
+    case mapPOIsHospital
     
     func displayName() -> String {
         switch (self) {
         case .mapBoundary:
             return "校园边界"
-        case .mapPOIs:
-            return "兴趣点"
+        case .mapPOIsOfficial:
+            return "行政办公"
+        case .mapPOIsStudy:
+            return "教学场所"
+        case .mapPOIsNature:
+            return "自然景物"
+        case .mapPOIsExercise:
+            return "健身运动"
+        case .mapPOIsCanteen:
+            return "食堂"
+        case .mapPOIsShopping:
+            return "超市"
+        case .mapPOIsDormitory:
+            return "学生宿舍"
+        case .mapPOIsHospital:
+            return "医院"
         }
     }
+    func image() -> UIImage {
+        switch (self) {
+        case .mapBoundary:
+            return #imageLiteral(resourceName: "star")
+        case .mapPOIsOfficial:
+            return #imageLiteral(resourceName: "office")
+        case .mapPOIsStudy:
+            return #imageLiteral(resourceName: "book")
+        case .mapPOIsNature:
+            return #imageLiteral(resourceName: "moutain")
+        case .mapPOIsExercise:
+            return #imageLiteral(resourceName: "gym")
+        case .mapPOIsCanteen:
+            return #imageLiteral(resourceName: "food-1")
+        case .mapPOIsShopping:
+            return #imageLiteral(resourceName: "shop")
+        case .mapPOIsDormitory:
+            return #imageLiteral(resourceName: "home")
+        case .mapPOIsHospital:
+            return #imageLiteral(resourceName: "hospital")
+    }
+}
 }
 
 class MapOptionsViewController: UIViewController {
@@ -56,7 +99,7 @@ extension MapOptionsViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 2
+        return 9
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
